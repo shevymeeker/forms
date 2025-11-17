@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Fact-Finding Form</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #1a237e;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3f51b5;
+            margin-top: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        p, .note {
+            font-size: 0.95em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        .note {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1e88e5;
+            padding: 10px 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            color: #444;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box; /* Important for 100% width */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: inherit;
+            min-height: 80px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        #generatePdfButton {
+            background-color: #3f51b5;
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #generatePdfButton:hover {
+            background-color: #303f9f;
+        }
+        #emailStep {
+            display: none; /* Hidden by default */
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #emailStep p {
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            color: #2e7d32;
+        }
+        #emailLink {
+            display: inline-block;
+            background-color: #4caf50;
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #emailLink:hover {
+            background-color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Legal Fact-Finding (Appeal)</h1>
+        [span_0](start_span)<p class="note">Circuit Court judges care about the drama even less than district court judges so I need specifics.[span_0](end_span) Nothing personal, nothing emotional. [span_1](start_span)Just the legal facts.[span_1](end_span)</p>
+
+        <form id="factForm">
+
+            <h2>Tenant Rights</h2>
+            <p>This determines whether you had tenant rights at the time.</p>
+
+            <label for="q_ten_1">Did you live there continuously? [span_2](start_span)How long?[span_2](end_span)</label>
+            <textarea id="q_ten_1"></textarea>
+
+            [span_3](start_span)<label for="q_ten_2">Did the mother-in-law ever tell you, "you could live there"?[span_3](end_span) (Even indirectly ("y'all can stay here") counts.)</label>
+            <textarea id="q_ten_2"></textarea>
+
+            [span_4](start_span)<label for="q_ten_3">Did the MIL ever collect rent from them, or was it understood they lived there as a family unit with permission?[span_4](end_span)</label>
+            <textarea id="q_ten_3"></textarea>
+
+            [span_5](start_span)<h2>Threats & Harassment[span_5](end_span)</h2>
+            <p>Threats fall into categories: Utilities, Belongings, Harassment, Showing up, Demanding departure, Threats of physical removal. The appeal is stronger the more detail we can tie to those categories.</p>
+
+            [span_6](start_span)<label for="q_thr_1">What was said or done?[span_6](end_span)</label>
+            <textarea id="q_thr_1"></textarea>
+
+            [span_7](start_span)<label for="q_thr_2">How many times?[span_7](end_span)</label>
+            <textarea id="q_thr_2"></textarea>
+
+            [span_8](start_span)<label for="q_thr_3">How was the threat delivered (call, text, in person)?[span_8](end_span)</label>
+            <textarea id="q_thr_3"></textarea>
+
+            [span_9](start_span)<label for="q_thr_4">Any witnesses?[span_9](end_span)</label>
+            <textarea id="q_thr_4"></textarea>
+
+            [span_10](start_span)<label for="q_thr_5">Any proof (texts, screenshots, call logs)?[span_10](end_span)</label>
+            <textarea id="q_thr_5"></textarea>
+
+            <h2>Causation (Constructive Eviction)</h2>
+            [span_11](start_span)<p>Circuit Court needs to see causation.[span_11](end_span) [span_12](start_span)Constructive eviction requires showing you didn't "voluntarily" move.[span_12](end_span)</p>
+
+            [span_13](start_span)<label for="q_cau_1">Did you leave because of the threats and harassment?[span_13](end_span)</label>
+            <textarea id="q_cau_1"></textarea>
+
+            [span_14](start_span)<label for="q_cau_2">Did you have any reasonable alternative (e.g., stay and face utility shutoff, belongings dumped, harassment escalating)?[span_14](end_span)</label>
+            <textarea id="q_cau_2"></textarea>
+
+            [span_15](start_span)<label for="q_cau_3">How quickly did you leave after the threats?[span_15](end_span)</label>
+            <textarea id="q_cau_3"></textarea>
+
+            [span_16](start_span)<label for="q_cau_4">Did you tell anyone you were being forced out?[span_16](end_span)</label>
+            <textarea id="q_cau_4"></textarea>
+
+            <h2>Damages & Remedy</h2>
+            [span_17](start_span)<p>This matters for the remedy portion.[span_17](end_span) (Don't need dollar amounts)[span_18](start_span).</p>
+
+            <label for="q_dam_1">What expenses did you incur due to leaving?[span_18](end_span)</label>
+            <textarea id="q_dam_1"></textarea>
+
+            [span_19](start_span)<label for="q_dam_2">Did family drive from another county to help?[span_19](end_span)</label>
+            <textarea id="q_dam_2"></textarea>
+
+            [span_20](start_span)<label for="q_dam_3">Did you lose belongings?[span_20](end_span)</label>
+            <textarea id="q_dam_3"></textarea>
+
+            [span_21](start_span)<label for="q_dam_4">Did you (or someone for you) pay for storage, gas, lodging, or moving supplies?[span_21](end_span)</label>
+            <textarea id="q_dam_4"></textarea>
+
+            [span_22](start_span)<label for="q_dam_5">Any therapy, stress-related issues, kids impacted, etc.?[span_22](end_span)</label>
+            <textarea id="q_dam_5"></textarea>
+
+            <h2>Potential Judicial Error</h2>
+            [span_23](start_span)<p>This is crucial for spotting appealable errors.[span_23](end_span)</p>
+
+            [span_24](start_span)<label for="q_err_1">What evidence did you present?[span_24](end_span)</label>
+            <textarea id="q_err_1"></textarea>
+
+            [span_25](start_span)<label for="q_err_2">Did the judge allow you to testify fully?[span_25](end_span)</label>
+            <textarea id="q_err_2"></textarea>
+
+            [span_26](start_span)<label for="q_err_3">Did the judge interrupt or refuse to consider certain facts?[span_26](end_span)</label>
+            <textarea id="q_err_3"></textarea>
+
+            [span_27](start_span)<label for="q_err_4">Did the judge state his reasoning on the record besides "you didn't pay rent"?[span_27](end_span)</label>
+            <textarea id="q_err_4"></textarea>
+
+            [span_28](start_span)<label for="q_err_5">Did the judge ask any questions at all?[span_28](end_span)</label>
+            <textarea id="q_err_5"></textarea>
+        </form>
+
+        <div class="button-container">
+            <button type="button" id="generatePdfButton">Generate PDF</button>
+        </div>
+        
+        <div id="emailStep">
+            <p><strong>Success!</strong> Your PDF has been downloaded.</p>
+            <p>Please click the link below to open your email, then **manually attach the 'appeal-facts.pdf' file** you just saved.</p>
+            <a href="mailto:smeeker0002@gmail.com?subject=Legal%20Fact-Finding%20Report&body=Please%20find%20my%20answers%20attached.%0D%0A%0D%0A(Remember%20to%20attach%20the%20'appeal-facts.pdf'%20file%20you%20just%20downloaded.)"
+               id="emailLink"
+               target="_blank">
+                Click Here to Open Email
+            </a>
+        </div>
+
+    </div> <script>
+        // Wait for the DOM to be ready
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // Get the main jsPDF object
+            const { jsPDF } = window.jspdf;
+
+            // Listen for clicks on the "Generate PDF" button
+            document.getElementById("generatePdfButton").addEventListener("click", () => {
+                
+                // Create a new PDF document
+                const doc = new jsPDF();
+                
+                // Set formatting variables
+                let currentY = 15; // Vertical position in the PDF
+                const leftMargin = 10;
+                const topMargin = 10;
+                const pageWidth = doc.internal.pageSize.getWidth() - (leftMargin * 2);
+                const lineHeight = 7; // Line height for text
+
+                // --- Helper Function ---
+                // This function adds a Question and Answer block,
+                // handles line wrapping, and adds new pages if needed.
+                function addQABlock(question, answerId) {
+                    let answer = document.getElementById(answerId).value.trim();
+                    
+                    // If no answer, just write "No answer provided."
+                    if (answer === "") {
+                        answer = "No answer provided.";
+                    }
+
+                    // Check if we need a new page *before* adding content
+                    if (currentY > 260) { // Near bottom of page (297mm high)
+                        doc.addPage();
+                        currentY = topMargin;
+                    }
+
+                    // Add the Question (Bold)
+                    doc.setFont(undefined, 'bold');
+                    // Use splitTextToSize to handle long questions that wrap
+                    let questionLines = doc.splitTextToSize(question, pageWidth);
+                    doc.text(questionLines, leftMargin, currentY);
+                    currentY += (questionLines.length * lineHeight); // Move Y down
+
+                    // Add the Answer (Normal)
+                    doc.setFont(undefined, 'normal');
+                    // Use splitTextToSize to handle long answers that wrap
+                    let answerLines = doc.splitTextToSize(answer, pageWidth);
+                    doc.text(answerLines, leftMargin + 5, currentY); // Indent answer slightly
+                    currentY += (answerLines.length * lineHeight) + lineHeight; // Add extra space after answer
+                }
+                // --- End Helper Function ---
+
+
+                // --- Build the PDF ---
+                
+                // Add Title
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text("Legal Fact-Finding Report", leftMargin, currentY);
+                currentY += 15;
+                doc.setFontSize(12);
+
+                // Tenant Rights
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text("Tenant Rights", leftMargin, currentY);
+                currentY += 10;
+                doc.setFontSize(12);
+                addQABlock("Did you live there continuously? How long?", "q_ten_1");
+                addQABlock("Did the mother-in-law ever tell you, 'you could live there'?", "q_ten_2");
+                addQABlock("Did the MIL ever collect rent...?", "q_ten_3");
+
+                // Threats & Harassment
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text("Threats & Harassment", leftMargin, currentY);
+                currentY += 10;
+                doc.setFontSize(12);
+                addQABlock("What was said or done?", "q_thr_1");
+                addQABlock("How many times?", "q_thr_2");
+                addQABlock("How was the threat delivered (call, text, in person)?", "q_thr_3");
+                addQABlock("Any witnesses?", "q_thr_4");
+                addQABlock("Any proof (texts, screenshots, call logs)?", "q_thr_5");
+                
+                // Causation
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text("Causation (Constructive Eviction)", leftMargin, currentY);
+                currentY += 10;
+                doc.setFontSize(12);
+                addQABlock("Did you leave because of the threats and harassment?", "q_cau_1");
+                addQABlock("Did you have any reasonable alternative...?", "q_cau_2");
+                addQABlock("How quickly did you leave after the threats?", "q_cau_3");
+                addQABlock("Did you tell anyone you were being forced out?", "q_cau_4");
+                
+                // Damages & Remedy
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text("Damages & Remedy", leftMargin, currentY);
+                currentY += 10;
+                doc.setFontSize(12);
+                addQABlock("What expenses did you incur due to leaving?", "q_dam_1");
+                addQABlock("Did family drive from another county to help?", "q_dam_2");
+                addQABlock("Did you lose belongings?", "q_dam_3");
+                addQABlock("Did you... pay for storage, gas, lodging, or moving supplies?", "q_dam_4");
+                addQABlock("Any therapy, stress-related issues, kids impacted, etc.?", "q_dam_5");
+
+                // Potential Judicial Error
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text("Potential Judicial Error", leftMargin, currentY);
+                currentY += 10;
+                doc.setFontSize(12);
+                addQABlock("What evidence did you present?", "q_err_1");
+                addQABlock("Did the judge allow you to testify fully?", "q_err_2");
+                addQABlock("Did the judge interrupt or refuse to consider certain facts?", "q_err_3");
+                addQABlock("Did the judge state his reasoning on the record besides 'you didn't pay rent'?", "q_err_4");
+                addQABlock("Did the judge ask any questions at all?", "q_err_5");
+
+
+                // --- Save the PDF ---
+                // This triggers the browser to download the file
+                doc.save("appeal-facts.pdf");
+
+                // --- Show the Email Step ---
+                // Now that the file is downloaded, show the hidden email instructions.
+                document.getElementById("emailStep").style.display = "block";
+                
+                // Optional: Change the button text
+                document.getElementById("generatePdfButton").textContent = "Re-Generate PDF";
+            });
+        });
+    </script>
+
+</body>
+</html>
