@@ -1,19 +1,19 @@
-const CACHE_NAME = 'form-builder-v2';
-const OFFLINE_CACHE = 'offline-v2';
+const CACHE_NAME = 'form-builder-v3';
+const OFFLINE_CACHE = 'offline-v3';
 
 // All resources to cache for offline use
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/styles.css',
-  '/js/app.js',
-  '/js/db.js',
-  '/js/formBuilder.js',
-  '/js/pdfGenerator.js',
-  '/js/signaturePad.js',
-  '/js/router.js',
-  '/js/cloudBackup.js',
-  '/manifest.json',
+  './',
+  './index.html',
+  './css/styles.css',
+  './js/app.js',
+  './js/db.js',
+  './js/formBuilder.js',
+  './js/pdfGenerator.js',
+  './js/signaturePad.js',
+  './js/router.js',
+  './js/cloudBackup.js',
+  './manifest.json',
   // External libraries - we'll cache these from CDN on first load
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js'
