@@ -175,12 +175,20 @@ class Database {
    * Save or update company branding
    */
   async saveBranding(brandingData) {
-    const data = {
-      id: 'company',
-      ...brandingData,
-      updatedAt: new Date().toISOString()
-    };
-    return this.put('branding', data);
+    try {
+      const data = {
+        id: 'company',
+        ...brandingData,
+        updatedAt: new Date().toISOString()
+      };
+      console.log('[DB] Saving branding:', data);
+      const result = await this.put('branding', data);
+      console.log('[DB] Branding saved successfully');
+      return result;
+    } catch (error) {
+      console.error('[DB] Error saving branding:', error);
+      throw error;
+    }
   }
 
   /**

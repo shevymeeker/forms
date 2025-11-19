@@ -340,6 +340,7 @@ class App {
       };
 
       try {
+        console.log('[App] Saving branding data:', brandingData);
         await window.DB.saveBranding(brandingData);
         this.branding = await window.DB.getBranding();
         await window.PDFGenerator.init(); // Reinitialize with new branding
@@ -349,6 +350,7 @@ class App {
 
         await window.DB.logEvent('branding_setup', { isFirstTime: !this.branding });
       } catch (error) {
+        console.error('[App] Failed to save branding:', error);
         this.showNotification('Failed to save settings: ' + error.message, 'error');
       }
     });
