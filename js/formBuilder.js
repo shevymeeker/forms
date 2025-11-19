@@ -239,8 +239,10 @@ class FormBuilder {
    * Save template to IndexedDB
    */
   async saveTemplate() {
+    console.log('[FormBuilder] Validating template...');
     const errors = this.validateTemplate();
     if (errors.length > 0) {
+      console.error('[FormBuilder] Validation errors:', errors);
       throw new Error(errors.join('\n'));
     }
 
@@ -249,7 +251,9 @@ class FormBuilder {
       id: this.editingTemplateId || undefined
     };
 
+    console.log('[FormBuilder] Saving template:', template);
     const id = await window.DB.saveTemplate(template);
+    console.log('[FormBuilder] Template saved with ID:', id);
 
     // Log analytics
     await window.DB.logEvent('template_saved', {

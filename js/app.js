@@ -729,11 +729,15 @@ class App {
 
   async saveTemplate() {
     try {
+      console.log('[App] Saving template...');
       const id = await window.FormBuilder.saveTemplate();
       this.showNotification('Template saved successfully!', 'success');
       window.Router.navigate('/templates');
     } catch (error) {
-      this.showNotification('Save failed: ' + error.message, 'error');
+      console.error('[App] Save template failed:', error);
+      // Show detailed error message with line breaks preserved
+      alert('Save failed:\n\n' + error.message);
+      this.showNotification('Save failed - see error details', 'error');
     }
   }
 

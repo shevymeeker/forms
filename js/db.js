@@ -202,16 +202,29 @@ class Database {
    * Save a form template
    */
   async saveTemplate(template) {
-    const data = {
-      ...template,
-      createdAt: template.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      const data = {
+        ...template,
+        createdAt: template.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    if (template.id) {
-      return this.put('templates', data);
-    } else {
-      return this.add('templates', data);
+      console.log('[DB] Saving template:', data);
+
+      if (template.id) {
+        console.log('[DB] Updating existing template with ID:', template.id);
+        const result = await this.put('templates', data);
+        console.log('[DB] Template updated successfully');
+        return result;
+      } else {
+        console.log('[DB] Adding new template');
+        const result = await this.add('templates', data);
+        console.log('[DB] Template added with ID:', result);
+        return result;
+      }
+    } catch (error) {
+      console.error('[DB] Error saving template:', error);
+      throw error;
     }
   }
 

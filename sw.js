@@ -1,5 +1,5 @@
-const CACHE_NAME = 'form-builder-v4';
-const OFFLINE_CACHE = 'offline-v4';
+const CACHE_NAME = 'form-builder-v5';
+const OFFLINE_CACHE = 'offline-v5';
 
 // All resources to cache for offline use
 const STATIC_ASSETS = [
