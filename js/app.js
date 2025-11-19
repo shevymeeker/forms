@@ -194,18 +194,23 @@ class App {
               </div>
 
               <div class="form-group">
-                <label for="phone">Phone</label>
-                <input type="tel" id="phone" value="${this.branding?.phone || ''}">
+                <label for="phone" class="required">Phone</label>
+                <input type="tel" id="phone" required value="${this.branding?.phone || ''}">
               </div>
 
               <div class="form-group">
                 <label for="website">Website</label>
-                <input type="url" id="website" value="${this.branding?.website || ''}">
+                <input type="text" id="website" placeholder="https://example.com" value="${this.branding?.website || ''}">
               </div>
 
               <div class="form-group">
-                <label for="address">Address</label>
-                <textarea id="address" rows="3">${this.branding?.address || ''}</textarea>
+                <label for="ein">EIN (Employer Identification Number)</label>
+                <input type="text" id="ein" placeholder="12-3456789 (optional)" value="${this.branding?.ein || ''}">
+              </div>
+
+              <div class="form-group">
+                <label for="address" class="required">Address</label>
+                <textarea id="address" rows="3" required placeholder="City, State (or full address)">${this.branding?.address || ''}</textarea>
               </div>
 
               <div class="alert alert-success">
@@ -330,6 +335,7 @@ class App {
         email: document.getElementById('email').value,
         phone: document.getElementById('phone').value,
         website: document.getElementById('website').value,
+        ein: document.getElementById('ein').value,
         address: document.getElementById('address').value
       };
 
