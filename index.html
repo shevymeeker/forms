@@ -1,353 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legal Fact-Finding Form</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Offline-first client onboarding form builder for small businesses">
+  <meta name="theme-color" content="#3f51b5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Form Builder">
 
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 30px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        h1 {
-            color: #1a237e;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-        }
-        h2 {
-            color: #3f51b5;
-            margin-top: 30px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
-        p, .note {
-            font-size: 0.95em;
-            color: #555;
-            margin-bottom: 15px;
-        }
-        .note {
-            background-color: #e3f2fd;
-            border-left: 4px solid #1e88e5;
-            padding: 10px 15px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            color: #444;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box; /* Important for 100% width */
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1em;
-            font-family: inherit;
-            min-height: 80px;
-        }
-        .button-container {
-            text-align: center;
-            margin-top: 30px;
-        }
-        #generatePdfButton {
-            background-color: #3f51b5;
-            color: white;
-            font-size: 1.1em;
-            font-weight: bold;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #generatePdfButton:hover {
-            background-color: #303f9f;
-        }
-        #emailStep {
-            display: none; /* Hidden by default */
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #e8f5e9;
-            border: 1px solid #a5d6a7;
-            border-radius: 5px;
-            text-align: center;
-        }
-        #emailStep p {
-            margin: 0 0 15px 0;
-            font-size: 1.1em;
-            color: #2e7d32;
-        }
-        #emailLink {
-            display: inline-block;
-            background-color: #4caf50;
-            color: white;
-            font-size: 1.1em;
-            font-weight: bold;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        #emailLink:hover {
-            background-color: #388e3c;
-        }
-    </style>
+  <title>Client Onboarding Form Builder</title>
+
+  <!-- Manifest for PWA -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <!-- External Libraries - Cached by service worker for offline use -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 </head>
 <body>
+  <!-- Main App Container -->
+  <div id="app">
+    <!-- Content will be rendered here by app.js -->
+    <div class="loader"></div>
+  </div>
 
-    <div class="container">
-        <h1>Legal Fact-Finding (Appeal)</h1>
-        <p class="note">Circuit Court judges care about the drama even less than district court judges so I need specifics. Nothing personal, nothing emotional. Just the legal facts.</p>
+  <!-- Application Scripts -->
+  <script src="/js/db.js"></script>
+  <script src="/js/router.js"></script>
+  <script src="/js/signaturePad.js"></script>
+  <script src="/js/pdfGenerator.js"></script>
+  <script src="/js/formBuilder.js"></script>
+  <script src="/js/app.js"></script>
 
-        <form id="factForm">
+  <!-- Install PWA Prompt -->
+  <script>
+    // Detect if app is running as PWA
+    let deferredPrompt;
 
-            <h2>Tenant Rights</h2>
-            <p>This determines whether you had tenant rights at the time.</p>
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
 
-            <label for="q_ten_1">Did you live there continuously? How long?</label>
-            <textarea id="q_ten_1"></textarea>
+      // Show custom install prompt if not already installed
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setTimeout(() => {
+          const install = confirm(
+            'Install this app for offline access and a better experience?'
+          );
 
-            <label for="q_ten_2">Did the mother-in-law ever tell you, "you could live there"? (Even indirectly ("y'all can stay here") counts.)</label>
-            <textarea id="q_ten_2"></textarea>
-
-            <label for="q_ten_3">Did the MIL ever collect rent, or was it understood you lived there as a family unit with permission?</label>
-            <textarea id="q_ten_3"></textarea>
-
-            <h2>Threats & Harassment</h2>
-            <p>Threats fall into categories: Utilities, Belongings, Harassment, Showing up, Demanding departure, Threats of physical removal. The appeal is stronger the more detail we can tie to those categories.</p>
-
-            <label for="q_thr_1">What was said or done?</label>
-            <textarea id="q_thr_1"></textarea>
-
-            <label for="q_thr_2">How many times?</label>
-            <textarea id="q_thr_2"></textarea>
-
-            <label for="q_thr_3">How was the threat delivered (call, text, in person)?</label>
-            <textarea id="q_thr_3"></textarea>
-
-            <label for="q_thr_4">Any witnesses?</label>
-            <textarea id="q_thr_4"></textarea>
-
-            <label for="q_thr_5">Any proof (texts, screenshots, call logs)?</label>
-            <textarea id="q_thr_5"></textarea>
-
-            <h2>Causation (Constructive Eviction)</h2>
-            <p>Circuit Court needs to see causation. Constructive eviction requires showing you didn't "voluntarily" move.</p>
-
-            <label for="q_cau_1">Did you leave because of the threats and harassment?</label>
-            <textarea id="q_cau_1"></textarea>
-
-            <label for="q_cau_2">Did you have any reasonable alternative (e.g., stay and face utility shutoff, belongings dumped, harassment escalating)?</label>
-            <textarea id="q_cau_2"></textarea>
-
-            <label for="q_cau_3">How quickly did you leave after the threats?</label>
-            <textarea id="q_cau_3"></textarea>
-
-            <label for="q_cau_4">Did you tell anyone you were being forced out?</label>
-            <textarea id="q_cau_4"></textarea>
-
-            <h2>Damages & Remedy</h2>
-            <p>This matters for the remedy portion. (Don't need dollar amounts).</p>
-
-            <label for="q_dam_1">What expenses did you incur due to leaving?</label>
-            <textarea id="q_dam_1"></textarea>
-
-            <label for="q_dam_2">Did family drive from another county to help?</label>
-            <textarea id="q_dam_2"></textarea>
-
-            <label for="q_dam_3">Did you lose belongings?</label>
-            <textarea id="q_dam_3"></textarea>
-
-            <label for="q_dam_4">Did you (or someone for you) pay for storage, gas, lodging, or moving supplies?</label>
-            <textarea id="q_dam_4"></textarea>
-
-            <label for="q_dam_5">Any therapy, stress-related issues, kids impacted, etc.?</label>
-            <textarea id="q_dam_5"></textarea>
-
-            <h2>Potential Judicial Error</h2>
-            <p>This is crucial for spotting appealable errors.</p>
-
-            <label for="q_err_1">What evidence did you present?</label>
-            <textarea id="q_err_1"></textarea>
-
-            <label for="q_err_2">Did the judge allow you to testify fully?</label>
-            <textarea id="q_err_2"></textarea>
-
-            <label for="q_err_3">Did the judge interrupt or refuse to consider certain facts?</label>
-            <textarea id="q_err_3"></textarea>
-
-            <label for="q_err_4">Did the judge state his reasoning on the record besides "you didn't pay rent"?</label>
-            <textarea id="q_err_4"></textarea>
-
-            <label for="q_err_5">Did the judge ask any questions at all?</label>
-            <textarea id="q_err_5"></textarea>
-        </form>
-
-        <div class="button-container">
-            <button type="button" id="generatePdfButton">Generate PDF</button>
-        </div>
-        
-        <div id="emailStep">
-            <p><strong>Success!</strong> Your PDF has been downloaded.</p>
-            <p>Please click the link below to open your email, then **manually attach the 'appeal-facts.pdf' file** you just saved.</p>
-            <a href="mailto:smeeker0002@gmail.com?subject=Legal%20Fact-Finding%20Report&body=Please%20find%20my%20answers%20attached.%0D%0A%0D%0A(Remember%20to%20attach%20the%20'appeal-facts.pdf'%20file%20you%20just%20downloaded.)"
-               id="emailLink"
-               target="_blank">
-                Click Here to Open Email
-            </a>
-        </div>
-
-    </div> <script>
-        // Wait for the DOM to be ready
-        document.addEventListener("DOMContentLoaded", () => {
-            
-            // Get the main jsPDF object
-            const { jsPDF } = window.jspdf;
-
-            // Listen for clicks on the "Generate PDF" button
-            document.getElementById("generatePdfButton").addEventListener("click", () => {
-                
-                // Create a new PDF document
-                const doc = new jsPDF();
-                
-                // Set formatting variables
-                let currentY = 15; // Vertical position in the PDF
-                const leftMargin = 10;
-                const topMargin = 10;
-                const pageWidth = doc.internal.pageSize.getWidth() - (leftMargin * 2);
-                const lineHeight = 7; // Line height for text
-
-                // --- Helper Function ---
-                // This function adds a Question and Answer block,
-                // handles line wrapping, and adds new pages if needed.
-                function addQABlock(question, answerId) {
-                    let answer = document.getElementById(answerId).value.trim();
-                    
-                    // If no answer, just write "No answer provided."
-                    if (answer === "") {
-                        answer = "No answer provided.";
-                    }
-
-                    // Check if we need a new page *before* adding content
-                    if (currentY > 260) { // Near bottom of page (297mm high)
-                        doc.addPage();
-                        currentY = topMargin;
-                    }
-
-                    // Add the Question (Bold)
-                    doc.setFont(undefined, 'bold');
-                    // Use splitTextToSize to handle long questions that wrap
-                    let questionLines = doc.splitTextToSize(question, pageWidth);
-                    doc.text(questionLines, leftMargin, currentY);
-                    currentY += (questionLines.length * lineHeight); // Move Y down
-
-                    // Add the Answer (Normal)
-                    doc.setFont(undefined, 'normal');
-                    // Use splitTextToSize to handle long answers that wrap
-                    let answerLines = doc.splitTextToSize(answer, pageWidth);
-                    doc.text(answerLines, leftMargin + 5, currentY); // Indent answer slightly
-                    currentY += (answerLines.length * lineHeight) + lineHeight; // Add extra space after answer
-                }
-                // --- End Helper Function ---
-
-
-                // --- Build the PDF ---
-                
-                // Add Title
-                doc.setFontSize(18);
-                doc.setFont(undefined, 'bold');
-                doc.text("Legal Fact-Finding Report", leftMargin, currentY);
-                currentY += 15;
-                doc.setFontSize(12);
-
-                // Tenant Rights
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text("Tenant Rights", leftMargin, currentY);
-                currentY += 10;
-                doc.setFontSize(12);
-                addQABlock("Did you live there continuously? How long?", "q_ten_1");
-                addQABlock("Did the mother-in-law ever tell you, 'you could live there'?", "q_ten_2");
-                addQABlock("Did the MIL ever collect rent...?", "q_ten_3");
-
-                // Threats & Harassment
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text("Threats & Harassment", leftMargin, currentY);
-                currentY += 10;
-                doc.setFontSize(12);
-                addQABlock("What was said or done?", "q_thr_1");
-                addQABlock("How many times?", "q_thr_2");
-                addQABlock("How was the threat delivered (call, text, in person)?", "q_thr_3");
-                addQABlock("Any witnesses?", "q_thr_4");
-                addQABlock("Any proof (texts, screenshots, call logs)?", "q_thr_5");
-                
-                // Causation
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text("Causation (Constructive Eviction)", leftMargin, currentY);
-                currentY += 10;
-                doc.setFontSize(12);
-                addQABlock("Did you leave because of the threats and harassment?", "q_cau_1");
-                addQABlock("Did you have any reasonable alternative...?", "q_cau_2");
-                addQABlock("How quickly did you leave after the threats?", "q_cau_3");
-                addQABlock("Did you tell anyone you were being forced out?", "q_cau_4");
-                
-                // Damages & Remedy
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text("Damages & Remedy", leftMargin, currentY);
-                currentY += 10;
-                doc.setFontSize(12);
-                addQABlock("What expenses did you incur due to leaving?", "q_dam_1");
-                addQABlock("Did family drive from another county to help?", "q_dam_2");
-                addQABlock("Did you lose belongings?", "q_dam_3");
-                addQABlock("Did you... pay for storage, gas, lodging, or moving supplies?", "q_dam_4");
-                addQABlock("Any therapy, stress-related issues, kids impacted, etc.?", "q_dam_5");
-
-                // Potential Judicial Error
-                doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
-                doc.text("Potential Judicial Error", leftMargin, currentY);
-                currentY += 10;
-                doc.setFontSize(12);
-                addQABlock("What evidence did you present?", "q_err_1");
-                addQABlock("Did the judge allow you to testify fully?", "q_err_2");
-                addQABlock("Did the judge interrupt or refuse to consider certain facts?", "q_err_3");
-                addQABlock("Did the judge state his reasoning on the record besides 'you didn't pay rent'?", "q_err_4");
-                addQABlock("Did the judge ask any questions at all?", "q_err_5");
-
-
-                // --- Save the PDF ---
-                // This triggers the browser to download the file
-                doc.save("appeal-facts.pdf");
-
-                // --- Show the Email Step ---
-                // Now that the file is downloaded, show the hidden email instructions.
-                document.getElementById("emailStep").style.display = "block";
-                
-                // Optional: Change the button text
-                document.getElementById("generatePdfButton").textContent = "Re-Generate PDF";
+          if (install && deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+              }
+              deferredPrompt = null;
             });
-        });
-    </script>
+          }
+        }, 5000); // Show after 5 seconds
+      }
+    });
 
+    // Log if running as PWA
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('Running as PWA');
+      }
+    });
+
+    // Handle app installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      deferredPrompt = null;
+    });
+  </script>
 </body>
 </html>
