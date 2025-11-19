@@ -684,6 +684,273 @@ input[type="radio"] {
 }
 
 /* ============================================
+   MOBILE-FIRST OPTIMIZATIONS
+   ============================================ */
+
+/* Touch target optimization - minimum 44x44px for iOS */
+@media (max-width: 768px) {
+  /* Larger touch targets for all interactive elements */
+  button,
+  .btn,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better button sizing on mobile */
+  .btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .btn-sm {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    min-height: 38px;
+  }
+
+  /* Larger form inputs for mobile */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    padding: 0.875rem;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    min-height: 44px;
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+
+  /* Better spacing on mobile */
+  .container {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Header optimizations */
+  header h1 {
+    font-size: 1.125rem;
+  }
+
+  header nav {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  header nav button,
+  header nav a {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+    text-align: center;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Card optimizations */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .card-title {
+    font-size: 1.125rem;
+  }
+
+  /* Dashboard grid */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dashboard-card {
+    padding: 1.5rem;
+  }
+
+  .dashboard-card-icon {
+    font-size: 2.5rem;
+  }
+
+  /* Template list optimizations */
+  .template-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0.75rem;
+  }
+
+  .template-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .template-actions .btn {
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
+  }
+
+  /* Form builder optimizations */
+  .builder-section {
+    padding: 1rem;
+  }
+
+  .builder-question {
+    padding: 0.875rem;
+  }
+
+  .builder-section-header,
+  .builder-question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .builder-section-controls,
+  .builder-question-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Signature pad optimizations for mobile/touch */
+  .signature-pad-container {
+    border-width: 3px; /* Thicker border for visibility */
+  }
+
+  .signature-pad {
+    height: 250px; /* Taller on mobile for easier signing */
+    touch-action: none; /* Prevent scrolling while signing */
+  }
+
+  .signature-pad-footer {
+    padding: 0.75rem;
+  }
+
+  .signature-pad-footer .btn {
+    min-width: 100px;
+  }
+
+  /* Button groups on mobile */
+  .btn-group {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-group .btn {
+    width: 100%;
+  }
+
+  /* Response form optimizations */
+  .response-section-title {
+    font-size: 1.25rem;
+  }
+
+  .response-question {
+    margin-bottom: 1.75rem;
+  }
+
+  /* Grid layouts */
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Alert optimizations */
+  .alert {
+    padding: 0.875rem;
+    font-size: 0.9375rem;
+  }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1rem;
+  }
+
+  header nav button,
+  header nav a {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .dashboard-card-title {
+    font-size: 1.125rem;
+  }
+
+  .template-actions .btn {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .signature-pad {
+    height: 200px;
+  }
+}
+
+/* iOS-specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari fixes */
+  input,
+  textarea,
+  select {
+    -webkit-appearance: none;
+    border-radius: var(--border-radius);
+  }
+
+  /* Prevent iOS from adding shine/gradient to buttons */
+  button,
+  .btn {
+    -webkit-appearance: none;
+  }
+
+  /* Better tap highlight color */
+  * {
+    -webkit-tap-highlight-color: rgba(63, 81, 181, 0.1);
+  }
+
+  /* Fix for iOS Safari address bar hiding */
+  #app {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Signature pad touch optimization for iOS */
+  .signature-pad {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Landscape orientation optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  .signature-pad {
+    height: 180px;
+  }
+
+  header {
+    position: relative; /* Don't stick on landscape mobile */
+  }
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 
@@ -723,13 +990,181 @@ input[type="radio"] {
 }
 
 /* ============================================
+   PRIVACY MANIFESTO & BADGES
+   ============================================ */
+
+.privacy-manifesto {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.privacy-manifesto h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.privacy-manifesto h2::before {
+  content: '🔒';
+  font-size: 2rem;
+}
+
+.privacy-manifesto ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  text-align: left;
+}
+
+.privacy-manifesto li {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.privacy-manifesto li::before {
+  content: '✓';
+  font-weight: bold;
+  color: #4caf50;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.privacy-manifesto p {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  cursor: help;
+  transition: var(--transition);
+}
+
+.privacy-badge:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.privacy-badge::before {
+  content: '🔒';
+  font-size: 1.125rem;
+}
+
+@media (max-width: 768px) {
+  .privacy-manifesto {
+    padding: 1.5rem;
+  }
+
+  .privacy-manifesto h2 {
+    font-size: 1.375rem;
+  }
+
+  .privacy-manifesto ul {
+    grid-template-columns: 1fr;
+  }
+
+  .privacy-badge {
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+/* Cloud backup UI */
+.backup-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.backup-option {
+  border: 2px solid var(--divider-color);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--surface);
+}
+
+.backup-option:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.backup-option.connected {
+  border-color: var(--accent-color);
+  background: #e8f5e9;
+}
+
+.backup-option-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.backup-option-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.backup-option-status {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.backup-option.connected .backup-option-status {
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .backup-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
    PRINT STYLES
    ============================================ */
 
 @media print {
   header,
   .btn,
-  .card-footer {
+  .card-footer,
+  .privacy-badge {
     display: none;
   }
 

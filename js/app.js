@@ -130,16 +130,54 @@ class App {
   }
 
   /**
+   * Check if running on iOS
+   */
+  isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  /**
+   * Check if running as installed PWA
+   */
+  isPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+  }
+
+  /**
    * Render setup view (first-time branding setup)
    */
   async renderSetup() {
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="container container-sm">
+        ${!this.branding ? `
+          <div class="privacy-manifesto">
+            <h2>YOUR DATA. YOUR DEVICE. PERIOD.</h2>
+            <ul>
+              <li>No accounts</li>
+              <li>No passwords</li>
+              <li>No cloud uploads (unless YOU choose)</li>
+              <li>No tracking</li>
+              <li>No analytics to 3rd parties</li>
+              <li>No newsletters</li>
+              <li>Works 100% offline</li>
+              <li>Data never leaves your device</li>
+              <li>Export anytime, anywhere</li>
+            </ul>
+            <p>
+              We don't want your data. We don't want your clients' data.
+              We don't even have a server to store it on.
+              <br><br>
+              <strong>This is YOUR tool. Your data stays with YOU.</strong>
+            </p>
+          </div>
+        ` : ''}
+
         <div class="card">
           <div class="card-header">
             <div>
-              <h1 class="card-title">Welcome! Let's Set Up Your Business</h1>
+              <h1 class="card-title">${this.branding ? 'Business Settings' : 'Welcome! Let\'s Set Up Your Business'}</h1>
               <p class="card-subtitle">This information will appear on all your forms</p>
             </div>
           </div>
@@ -170,19 +208,74 @@ class App {
                 <textarea id="address" rows="3">${this.branding?.address || ''}</textarea>
               </div>
 
-              <div class="alert alert-info">
-                <strong>Offline First:</strong> All your data is stored locally on this device.
+              <div class="alert alert-success">
+                <strong>✓ Fully Offline:</strong> All your data is stored locally on this device.
                 No internet connection required after initial setup!
+                ${!navigator.onLine ? '<br><strong>You are currently offline</strong> - everything still works!' : ''}
               </div>
+
+              ${this.branding ? `
+                <div class="card mt-3">
+                  <div class="card-header">
+                    <h3 class="card-title">Cloud Backup (Optional)</h3>
+                    <p class="card-subtitle">Back up to YOUR personal cloud storage</p>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-muted mb-3">
+                      Connect to your personal cloud storage to automatically back up your data.
+                      Your data goes directly to YOUR account - we never see it.
+                    </p>
+                    <div class="backup-options">
+                      <div class="backup-option ${window.CloudBackup.isConnected('googleDrive') ? 'connected' : ''}"
+                           onclick="app.toggleCloudProvider('googleDrive')">
+                        <div class="backup-option-icon">📁</div>
+                        <div class="backup-option-title">Google Drive</div>
+                        <div class="backup-option-status">
+                          ${window.CloudBackup.isConnected('googleDrive') ? 'Connected' : 'Not Connected'}
+                        </div>
+                      </div>
+
+                      <div class="backup-option ${window.CloudBackup.isConnected('dropbox') ? 'connected' : ''}"
+                           onclick="app.toggleCloudProvider('dropbox')">
+                        <div class="backup-option-icon">📦</div>
+                        <div class="backup-option-title">Dropbox</div>
+                        <div class="backup-option-status">
+                          ${window.CloudBackup.isConnected('dropbox') ? 'Connected' : 'Not Connected'}
+                        </div>
+                      </div>
+
+                      <div class="backup-option"
+                           onclick="app.backupToFiles()">
+                        <div class="backup-option-icon">☁️</div>
+                        <div class="backup-option-title">Save to Files</div>
+                        <div class="backup-option-status">
+                          iOS: Saves to iCloud<br>Desktop: Choose location
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                      <strong>Your Privacy:</strong> Cloud backup is 100% optional. If you enable it,
+                      data is sent directly to YOUR cloud account using YOUR credentials.
+                      We never see or store your data.
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
 
               <div class="card-footer">
                 <button type="submit" class="btn btn-primary btn-lg btn-block">
-                  ${this.branding ? 'Update Settings' : 'Complete Setup & Get Started'}
+                  ${this.branding ? 'Save Settings' : 'Complete Setup & Get Started'}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      </div>
+
+      <!-- Privacy Badge -->
+      <div class="privacy-badge" title="Your data stays on your device. No tracking. No cloud uploads (unless you choose). Period.">
+        Your Data, Your Device
       </div>
     `;
 
@@ -257,6 +350,33 @@ class App {
             </div>
           </div>
 
+          ${this.isIOS() && !this.isPWA() ? `
+            <div class="card mt-4" style="border: 2px solid var(--primary-color);">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">📲 Install on iPhone/iPad</h3>
+                  <p class="card-subtitle">Get the best experience with offline access</p>
+                </div>
+              </div>
+              <div class="card-body">
+                <p>To install this app on your iOS device:</p>
+                <ol style="padding-left: 1.5rem; margin: 1rem 0;">
+                  <li>Tap the <strong>Share</strong> button <span style="font-size: 1.5rem;">⎙</span> at the bottom of Safari</li>
+                  <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                  <li>Tap <strong>"Add"</strong> in the top right</li>
+                  <li>The app icon will appear on your home screen!</li>
+                </ol>
+                <div class="alert alert-info">
+                  <strong>Note:</strong> This only works in Safari browser. If you're using Chrome or Firefox on iOS,
+                  please open this page in Safari first.
+                </div>
+                <p class="text-muted" style="font-size: 0.875rem; margin-top: 1rem;">
+                  After installation, the app works completely offline and will feel like a native iOS app.
+                </p>
+              </div>
+            </div>
+          ` : ''}
+
           <div class="card mt-4">
             <div class="card-header">
               <div>
@@ -280,6 +400,11 @@ class App {
           </div>
         </div>
       </main>
+
+      <!-- Privacy Badge -->
+      <div class="privacy-badge" title="Your data stays on your device. No tracking. No cloud uploads (unless you choose). Period.">
+        Your Data, Your Device
+      </div>
     `;
   }
 
@@ -947,6 +1072,51 @@ class App {
       await window.DB.logEvent('data_export', { timestamp: new Date().toISOString() });
     } catch (error) {
       this.showNotification('Export failed: ' + error.message, 'error');
+    }
+  }
+
+  /**
+   * Toggle cloud provider connection
+   */
+  async toggleCloudProvider(provider) {
+    try {
+      if (window.CloudBackup.isConnected(provider)) {
+        // Disconnect
+        if (confirm(`Disconnect from ${provider}?`)) {
+          window.CloudBackup.disconnect(provider);
+          this.showNotification(`Disconnected from ${provider}`, 'success');
+          window.Router.navigate('/setup'); // Refresh
+        }
+      } else {
+        // Connect
+        this.showNotification(`Connecting to ${provider}...`, 'info');
+
+        if (provider === 'googleDrive') {
+          await window.CloudBackup.connectGoogleDrive();
+          this.showNotification('Connected to Google Drive!', 'success');
+        } else if (provider === 'dropbox') {
+          await window.CloudBackup.connectDropbox();
+          this.showNotification('Connected to Dropbox!', 'success');
+        }
+
+        // Refresh to show connected state
+        window.Router.navigate('/setup');
+      }
+    } catch (error) {
+      this.showNotification(`Connection failed: ${error.message}`, 'error');
+    }
+  }
+
+  /**
+   * Backup to Files (iCloud on iOS, file picker on desktop)
+   */
+  async backupToFiles() {
+    try {
+      const data = await window.DB.exportAllData();
+      await window.CloudBackup.backupToICloud(data);
+      this.showNotification('Backup saved! On iOS, choose iCloud Drive in Files app.', 'success');
+    } catch (error) {
+      this.showNotification(`Backup failed: ${error.message}`, 'error');
     }
   }
 
