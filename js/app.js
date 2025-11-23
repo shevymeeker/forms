@@ -463,6 +463,7 @@ class App {
    */
   async renderTemplates() {
     const templates = await window.DB.getAllTemplates();
+    const sampleTemplates = window.SAMPLE_TEMPLATES || [];
 
     const app = document.getElementById('app');
     app.innerHTML = `
@@ -481,18 +482,55 @@ class App {
           <h2>My Form Templates</h2>
           <p class="text-muted">Create, edit, and manage your form templates</p>
 
+          ${sampleTemplates.length > 0 ? `
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 2rem;">
+              <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                <div>
+                  <h3 class="card-title" style="color: white; display: flex; align-items: center; gap: 0.5rem;">
+                    ✨ Starter Templates
+                  </h3>
+                  <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">
+                    Get started quickly with pre-built professional templates
+                  </p>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="grid grid-3">
+                  ${sampleTemplates.map(template => `
+                    <div class="card" style="background: white; cursor: pointer; transition: all 0.3s ease; border: none;"
+                         onclick="app.showSampleTemplatePreview('${template.name.replace(/'/g, "\\'")}')"
+                         onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                      <div class="card-body" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 0.75rem;">${template.icon}</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1rem;">${template.name}</h4>
+                        <p style="margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.4;">
+                          ${template.description}
+                        </p>
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); app.importSampleTemplate('${template.name.replace(/'/g, "\\'")}')">
+                          Use This Template
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
           ${templates.length === 0 ? `
             <div class="card text-center">
               <div class="card-body">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">📝</div>
-                <h3>No templates yet</h3>
-                <p class="text-muted">Create your first form template to get started</p>
+                <h3>No custom templates yet</h3>
+                <p class="text-muted">Import a starter template above or create your own from scratch</p>
                 <button class="btn btn-primary mt-3" onclick="window.Router.navigate('/builder')">
-                  Create First Template
+                  Create Custom Template
                 </button>
               </div>
             </div>
           ` : `
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem;">My Custom Templates</h3>
             <div class="card">
               <div class="card-body">
                 ${templates.map(template => {
@@ -947,6 +985,131 @@ class App {
 
   navigateToFill(templateId) {
     window.Router.navigate('/fill', { id: templateId });
+  }
+
+  /**
+   * Import a sample template
+   */
+  async importSampleTemplate(templateName) {
+    try {
+      const sampleTemplate = window.SAMPLE_TEMPLATES.find(t => t.name === templateName);
+      if (!sampleTemplate) {
+        this.showNotification('Sample template not found', 'error');
+        return;
+      }
+
+      // Create a copy of the sample template (without id so it gets a new one)
+      const newTemplate = {
+        name: sampleTemplate.name,
+        sections: sampleTemplate.sections
+      };
+
+      // Save to database
+      const id = await window.DB.saveTemplate(newTemplate);
+
+      this.showNotification(`"${templateName}" imported successfully!`, 'success');
+
+      // Ask if user wants to edit or use it
+      const action = confirm('Template imported!\n\nClick OK to edit the template, or Cancel to view all templates.');
+
+      if (action) {
+        window.Router.navigate('/builder', { id });
+      } else {
+        window.Router.navigate('/templates');
+      }
+
+      await window.DB.logEvent('sample_template_imported', { templateName });
+    } catch (error) {
+      console.error('[App] Failed to import sample template:', error);
+      this.showNotification('Failed to import template: ' + error.message, 'error');
+    }
+  }
+
+  /**
+   * Show sample template preview
+   */
+  showSampleTemplatePreview(templateName) {
+    const sampleTemplate = window.SAMPLE_TEMPLATES.find(t => t.name === templateName);
+    if (!sampleTemplate) return;
+
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: auto;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    `;
+
+    modalContent.innerHTML = `
+      <div style="padding: 2rem; border-bottom: 1px solid var(--divider-color); position: sticky; top: 0; background: white; z-index: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+              <span style="font-size: 2rem;">${sampleTemplate.icon}</span>
+              <h2 style="margin: 0; color: var(--primary-color);">${sampleTemplate.name}</h2>
+            </div>
+            <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">
+              ${sampleTemplate.description}
+            </p>
+            <div style="display: inline-block; margin-top: 0.5rem; padding: 0.25rem 0.75rem; background: var(--primary-light); color: var(--primary-dark); border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+              ${sampleTemplate.category}
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="font-size: 1.5rem; padding: 0.5rem 1rem;">×</button>
+        </div>
+      </div>
+      <div style="padding: 2rem;">
+        ${sampleTemplate.sections.map(section => `
+          <div class="response-section" style="background: white; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--divider-color);">
+            <h2 class="response-section-title" style="font-size: 1.5rem; margin-bottom: ${section.description ? '0.5rem' : '1rem'}; color: var(--text-primary);">
+              ${section.title}
+            </h2>
+            ${section.description ? `<p class="response-section-description" style="color: var(--text-secondary); margin-bottom: 1.5rem;">${section.description}</p>` : ''}
+
+            ${section.questions.map(question => this.renderPreviewQuestion(question)).join('')}
+          </div>
+        `).join('')}
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--divider-color);">
+          <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="flex: 1;">
+            Close
+          </button>
+          <button class="btn btn-primary" onclick="app.importSampleTemplate('${sampleTemplate.name.replace(/'/g, "\\'")}'); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
+            Use This Template
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.appendChild(modalContent);
+
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+
+    document.body.appendChild(modal);
   }
 
   async duplicateTemplate(templateId) {
