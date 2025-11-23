@@ -730,20 +730,214 @@ class App {
   async saveTemplate() {
     try {
       console.log('[App] Saving template...');
+
+      // Check if database is initialized
+      if (!window.DB || !window.DB.db) {
+        throw new Error('Database not initialized. Please refresh the page and try again.');
+      }
+
+      // Validate before attempting to save
+      const errors = window.FormBuilder.validateTemplate();
+      if (errors.length > 0) {
+        // Show user-friendly validation errors
+        const errorMsg = 'Please fix the following issues:\n\n' + errors.map((e, i) => `${i + 1}. ${e}`).join('\n');
+        alert(errorMsg);
+        this.showNotification('Please fix validation errors', 'error');
+        return;
+      }
+
+      // Attempt to save
       const id = await window.FormBuilder.saveTemplate();
+      console.log('[App] Template saved with ID:', id);
+
       this.showNotification('Template saved successfully!', 'success');
       window.Router.navigate('/templates');
+
     } catch (error) {
       console.error('[App] Save template failed:', error);
-      // Show detailed error message with line breaks preserved
-      alert('Save failed:\n\n' + error.message);
-      this.showNotification('Save failed - see error details', 'error');
+
+      // Provide user-friendly error messages
+      let errorMessage = error.message;
+
+      if (error.name === 'QuotaExceededError') {
+        errorMessage = 'Storage quota exceeded. Please free up space or delete old templates.';
+      } else if (error.message.includes('database')) {
+        errorMessage = 'Database error. Try refreshing the page.\n\nDetails: ' + error.message;
+      } else if (!navigator.onLine) {
+        errorMessage = 'You are offline, but save should still work. Error: ' + error.message;
+      }
+
+      // Show detailed error message
+      alert('Save Failed\n\n' + errorMessage + '\n\nIf this persists, try:\n1. Refresh the page\n2. Clear browser cache\n3. Check browser console for details');
+
+      this.showNotification('Save failed - check error dialog', 'error');
     }
   }
 
   previewTemplate() {
-    // TODO: Implement preview in modal
-    alert('Preview functionality coming soon!');
+    const template = window.FormBuilder.getTemplate();
+
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: auto;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    `;
+
+    modalContent.innerHTML = `
+      <div style="padding: 2rem; border-bottom: 1px solid var(--divider-color); position: sticky; top: 0; background: white; z-index: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="margin: 0; color: var(--primary-color);">Preview: ${template.name || 'Untitled Form'}</h2>
+            <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary); font-size: 0.875rem;">
+              This is how your form will look when clients fill it out
+            </p>
+          </div>
+          <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="font-size: 1.5rem; padding: 0.5rem 1rem;">×</button>
+        </div>
+      </div>
+      <div style="padding: 2rem;">
+        ${template.sections.length === 0 ? `
+          <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+            <p>No sections added yet. Add sections and questions to see the preview.</p>
+          </div>
+        ` : `
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="preview-clientName">Client Name (Optional)</label>
+                <input type="text" id="preview-clientName" placeholder="Enter client name" disabled>
+                <div class="form-help">This helps you identify the response later</div>
+              </div>
+            </div>
+          </div>
+
+          ${template.sections.map(section => `
+            <div class="response-section" style="background: white; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--divider-color);">
+              <h2 class="response-section-title" style="font-size: 1.5rem; margin-bottom: ${section.description ? '0.5rem' : '1rem'}; color: var(--text-primary);">
+                ${section.title}
+              </h2>
+              ${section.description ? `<p class="response-section-description" style="color: var(--text-secondary); margin-bottom: 1.5rem;">${section.description}</p>` : ''}
+
+              ${section.questions.length === 0 ? `
+                <p style="color: var(--text-secondary); font-style: italic;">No questions in this section</p>
+              ` : section.questions.map(question => this.renderPreviewQuestion(question)).join('')}
+            </div>
+          `).join('')}
+        `}
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--divider-color);">
+          <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="flex: 1;">
+            Close Preview
+          </button>
+          <button class="btn btn-primary" onclick="app.saveTemplate(); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
+            Save Template
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.appendChild(modalContent);
+
+    // Close modal when clicking outside
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.remove();
+    };
+
+    document.body.appendChild(modal);
+  }
+
+  /**
+   * Render a question in preview mode
+   */
+  renderPreviewQuestion(question) {
+    const requiredLabel = question.required ? '<span style="color: var(--error-color);">*</span>' : '';
+
+    let inputHtml = '';
+
+    switch (question.type) {
+      case 'text':
+        inputHtml = `<input type="text" placeholder="Enter your answer..." disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--divider-color); border-radius: var(--border-radius); font-size: 1rem;">`;
+        break;
+
+      case 'textarea':
+        inputHtml = `<textarea rows="5" placeholder="Enter your answer..." disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--divider-color); border-radius: var(--border-radius); font-size: 1rem; font-family: inherit;"></textarea>`;
+        break;
+
+      case 'checkbox':
+        inputHtml = (question.options || []).map(option => `
+          <div style="margin-bottom: 0.5rem;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="checkbox" disabled style="margin-right: 0.5rem;">
+              ${option}
+            </label>
+          </div>
+        `).join('');
+        break;
+
+      case 'radio':
+        inputHtml = (question.options || []).map(option => `
+          <div style="margin-bottom: 0.5rem;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="radio" disabled style="margin-right: 0.5rem;">
+              ${option}
+            </label>
+          </div>
+        `).join('');
+        break;
+
+      case 'select':
+        inputHtml = `
+          <select disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--divider-color); border-radius: var(--border-radius); font-size: 1rem;">
+            <option>-- Select --</option>
+            ${(question.options || []).map(option => `<option>${option}</option>`).join('')}
+          </select>
+        `;
+        break;
+
+      case 'signature':
+        inputHtml = `
+          <div style="border: 2px dashed var(--divider-color); border-radius: var(--border-radius); padding: 3rem 1rem; text-align: center; background: var(--background);">
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">✍️ Signature pad will appear here</div>
+          </div>
+        `;
+        break;
+
+      default:
+        inputHtml = `<input type="text" placeholder="Enter your answer..." disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--divider-color); border-radius: var(--border-radius); font-size: 1rem;">`;
+    }
+
+    return `
+      <div class="response-question form-group" style="margin-bottom: 1.5rem;">
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+          ${question.label} ${requiredLabel}
+        </label>
+        ${inputHtml}
+      </div>
+    `;
   }
 
   // Template action methods

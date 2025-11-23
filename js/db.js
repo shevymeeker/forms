@@ -16,15 +16,39 @@ class Database {
    */
   async init() {
     return new Promise((resolve, reject) => {
+      // Check if IndexedDB is available
+      if (!window.indexedDB) {
+        reject(new Error('IndexedDB is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.'));
+        return;
+      }
+
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onerror = () => {
-        reject(new Error('Failed to open database'));
+      request.onerror = (event) => {
+        console.error('[DB] Database initialization error:', event.target.error);
+        const error = event.target.error;
+        let errorMessage = 'Failed to open database';
+
+        if (error.name === 'QuotaExceededError') {
+          errorMessage = 'Storage quota exceeded. Please free up space in your browser.';
+        } else if (error.name === 'VersionError') {
+          errorMessage = 'Database version conflict. Please refresh the page.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        reject(new Error(errorMessage));
       };
 
       request.onsuccess = (event) => {
         this.db = event.target.result;
         console.log('[DB] Database initialized successfully');
+
+        // Add error handler for future operations
+        this.db.onerror = (event) => {
+          console.error('[DB] Database error:', event.target.error);
+        };
+
         resolve(this.db);
       };
 
@@ -203,6 +227,11 @@ class Database {
    */
   async saveTemplate(template) {
     try {
+      // Check if database is ready
+      if (!this.db) {
+        throw new Error('Database not initialized. Please wait for the app to load completely.');
+      }
+
       const data = {
         ...template,
         createdAt: template.createdAt || new Date().toISOString(),
@@ -224,6 +253,16 @@ class Database {
       }
     } catch (error) {
       console.error('[DB] Error saving template:', error);
+
+      // Enhance error messages
+      if (error.name === 'QuotaExceededError') {
+        throw new Error('Storage quota exceeded. Please delete some old templates or clear browser data.');
+      } else if (error.name === 'InvalidStateError') {
+        throw new Error('Database is not ready. Please refresh the page and try again.');
+      } else if (error.name === 'DataError') {
+        throw new Error('Invalid template data. Please check all fields and try again.');
+      }
+
       throw error;
     }
   }
