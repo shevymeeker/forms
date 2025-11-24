@@ -29,6 +29,11 @@ class App {
       // Check if branding exists
       this.branding = await window.DB.getBranding();
 
+      // Apply brand colors if they exist
+      if (this.branding?.brandColors) {
+        this.applyBrandColors(this.branding.brandColors);
+      }
+
       // Register service worker
       if ('serviceWorker' in navigator) {
         try {
@@ -189,6 +194,18 @@ class App {
               </div>
 
               <div class="form-group">
+                <label for="companyLogo">Company Logo (optional)</label>
+                <input type="file" id="companyLogo" accept="image/*" onchange="app.handleLogoUpload(event)">
+                <div class="form-help">Upload your logo (PNG, JPG, SVG). We'll automatically resize it and extract colors for your theme.</div>
+                ${this.branding?.logo ? `
+                  <div class="logo-preview" style="margin-top: 1rem; padding: 1rem; background: var(--background); border-radius: var(--border-radius); text-align: center;">
+                    <img src="${this.branding.logo}" alt="Company Logo" style="max-width: 200px; max-height: 100px; object-fit: contain;">
+                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="app.removeLogo()">Remove Logo</button>
+                  </div>
+                ` : ''}
+              </div>
+
+              <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" value="${this.branding?.email || ''}">
               </div>
@@ -336,7 +353,9 @@ class App {
         phone: document.getElementById('phone').value,
         website: document.getElementById('website').value,
         ein: document.getElementById('ein').value,
-        address: document.getElementById('address').value
+        address: document.getElementById('address').value,
+        logo: this.branding?.logo || null, // Preserve existing logo if not changed
+        brandColors: this.branding?.brandColors || null // Preserve existing colors
       };
 
       try {
@@ -1007,7 +1026,14 @@ class App {
       // Add auto-branded company info to the first section if branding exists
       if (branding && sections.length > 0) {
         // Build company info header
-        let companyHeader = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nProvided by: ${branding.companyName || 'Our Company'}`;
+        let companyHeader = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        // Add logo mention if it exists
+        if (branding.logo) {
+          companyHeader += `[Company Logo]\n\n`;
+        }
+
+        companyHeader += `Provided by: ${branding.companyName || 'Our Company'}`;
         if (branding.phone) companyHeader += `\nPhone: ${branding.phone}`;
         if (branding.email) companyHeader += `\nEmail: ${branding.email}`;
         if (branding.website) companyHeader += `\nWebsite: ${branding.website}`;
@@ -1021,6 +1047,11 @@ class App {
           firstSection.description = companyHeader + '\n' + firstSection.description;
         } else {
           firstSection.description = companyHeader;
+        }
+
+        // Store logo reference in section metadata (for PDF generation)
+        if (branding.logo) {
+          firstSection.brandLogo = branding.logo;
         }
       }
 
@@ -1199,6 +1230,12 @@ class App {
 
       <main>
         <div class="container container-sm">
+          ${this.branding?.logo ? `
+            <div class="card" style="text-align: center; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <img src="${this.branding.logo}" alt="${this.branding.companyName || 'Company'} Logo" style="max-width: 300px; max-height: 120px; object-fit: contain; margin: 0 auto;">
+            </div>
+          ` : ''}
+
           <div class="card">
             <div class="card-body">
               <div class="form-group">
@@ -1859,6 +1896,331 @@ class App {
    */
   hideLoader() {
     // Loader will be replaced by content
+  }
+
+  /**
+   * Handle logo upload with auto-resize and color extraction
+   */
+  async handleLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.showNotification('Please upload an image file', 'error');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      this.showNotification('Image is too large. Please use an image under 5MB', 'error');
+      return;
+    }
+
+    try {
+      this.showNotification('Processing logo...', 'info');
+
+      // Read and resize the image
+      const resizedImage = await this.resizeImage(file, 400, 200); // Max 400x200px
+
+      // Extract colors from the image
+      const colors = await this.extractColorsFromImage(resizedImage);
+
+      // Update branding with logo and colors
+      if (!this.branding) {
+        this.branding = {};
+      }
+      this.branding.logo = resizedImage;
+      this.branding.brandColors = colors;
+
+      // Apply colors to theme
+      this.applyBrandColors(colors);
+
+      this.showNotification('Logo uploaded and colors extracted!', 'success');
+
+      // Re-render to show preview
+      window.Router.navigate('/setup');
+    } catch (error) {
+      console.error('[App] Logo upload failed:', error);
+      this.showNotification('Failed to process logo: ' + error.message, 'error');
+    }
+  }
+
+  /**
+   * Resize image to fit within max dimensions
+   */
+  async resizeImage(file, maxWidth, maxHeight) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const img = new Image();
+
+        img.onload = () => {
+          // Calculate new dimensions
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+
+          // Create canvas and resize
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64
+          const resizedDataUrl = canvas.toDataURL('image/png', 0.9);
+          resolve(resizedDataUrl);
+        };
+
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target.result;
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Extract dominant colors from image
+   */
+  async extractColorsFromImage(imageDataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.onload = () => {
+        // Create canvas to analyze image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Use smaller size for color analysis (faster)
+        const size = 100;
+        canvas.width = size;
+        canvas.height = size;
+
+        ctx.drawImage(img, 0, 0, size, size);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, size, size);
+        const pixels = imageData.data;
+
+        // Count color frequencies (simplified color buckets)
+        const colorCounts = {};
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = Math.round(pixels[i] / 32) * 32; // Bucket colors
+          const g = Math.round(pixels[i + 1] / 32) * 32;
+          const b = Math.round(pixels[i + 2] / 32) * 32;
+          const a = pixels[i + 3];
+
+          // Skip transparent and very light/dark pixels
+          if (a < 128 || (r > 224 && g > 224 && b > 224) || (r < 32 && g < 32 && b < 32)) {
+            continue;
+          }
+
+          const key = `${r},${g},${b}`;
+          colorCounts[key] = (colorCounts[key] || 0) + 1;
+        }
+
+        // Get most common colors
+        const sortedColors = Object.entries(colorCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([color]) => {
+            const [r, g, b] = color.split(',').map(Number);
+            return { r, g, b };
+          });
+
+        if (sortedColors.length === 0) {
+          resolve({ primary: '#3f51b5', accent: '#4caf50' });
+          return;
+        }
+
+        // Use most dominant color as primary
+        const primary = sortedColors[0];
+        const primaryHex = this.rgbToHex(primary.r, primary.g, primary.b);
+
+        // Find a contrasting color for accent (or use second most dominant)
+        let accent;
+        if (sortedColors.length > 1) {
+          const secondary = sortedColors[1];
+          accent = this.rgbToHex(secondary.r, secondary.g, secondary.b);
+        } else {
+          // Generate complementary color
+          accent = this.generateComplementaryColor(primary);
+        }
+
+        resolve({
+          primary: primaryHex,
+          accent: accent
+        });
+      };
+
+      img.onerror = () => reject(new Error('Failed to analyze image'));
+      img.src = imageDataUrl;
+    });
+  }
+
+  /**
+   * Convert RGB to hex color
+   */
+  rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+      const hex = x.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+  }
+
+  /**
+   * Generate complementary color
+   */
+  generateComplementaryColor(rgb) {
+    // Simple complementary color (opposite on color wheel)
+    const h = this.rgbToHsl(rgb.r, rgb.g, rgb.b);
+    h.h = (h.h + 180) % 360;
+    const complementary = this.hslToRgb(h.h, h.s, h.l);
+    return this.rgbToHex(complementary.r, complementary.g, complementary.b);
+  }
+
+  /**
+   * Convert RGB to HSL
+   */
+  rgbToHsl(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+
+    return { h: h * 360, s: s * 100, l: l * 100 };
+  }
+
+  /**
+   * Convert HSL to RGB
+   */
+  hslToRgb(h, s, l) {
+    h /= 360;
+    s /= 100;
+    l /= 100;
+
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255)
+    };
+  }
+
+  /**
+   * Apply brand colors to theme
+   */
+  applyBrandColors(colors) {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', colors.primary);
+    root.style.setProperty('--accent-color', colors.accent);
+
+    // Generate darker variations
+    const primaryRgb = this.hexToRgb(colors.primary);
+    const accentRgb = this.hexToRgb(colors.accent);
+
+    const primaryDark = this.rgbToHex(
+      Math.max(0, primaryRgb.r - 40),
+      Math.max(0, primaryRgb.g - 40),
+      Math.max(0, primaryRgb.b - 40)
+    );
+
+    const accentDark = this.rgbToHex(
+      Math.max(0, accentRgb.r - 40),
+      Math.max(0, accentRgb.g - 40),
+      Math.max(0, accentRgb.b - 40)
+    );
+
+    const primaryLight = this.rgbToHex(
+      Math.min(255, primaryRgb.r + 100),
+      Math.min(255, primaryRgb.g + 100),
+      Math.min(255, primaryRgb.b + 100)
+    );
+
+    root.style.setProperty('--primary-dark', primaryDark);
+    root.style.setProperty('--accent-dark', accentDark);
+    root.style.setProperty('--primary-light', primaryLight);
+
+    console.log('[App] Applied brand colors:', colors);
+  }
+
+  /**
+   * Convert hex to RGB
+   */
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 63, g: 81, b: 181 }; // Default to primary color
+  }
+
+  /**
+   * Remove logo
+   */
+  async removeLogo() {
+    if (!confirm('Remove company logo?')) return;
+
+    if (this.branding) {
+      this.branding.logo = null;
+      this.branding.brandColors = null;
+    }
+
+    // Reset to default colors
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', '#3f51b5');
+    root.style.setProperty('--primary-dark', '#303f9f');
+    root.style.setProperty('--primary-light', '#c5cae9');
+    root.style.setProperty('--accent-color', '#4caf50');
+    root.style.setProperty('--accent-dark', '#388e3c');
+
+    this.showNotification('Logo removed', 'success');
+    window.Router.navigate('/setup');
   }
 }
 
