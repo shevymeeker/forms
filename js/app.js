@@ -592,10 +592,159 @@ class App {
   }
 
   /**
+   * Render template chooser for new forms
+   */
+  async renderTemplateChooser() {
+    const sampleTemplates = window.SAMPLE_TEMPLATES || [];
+
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <header>
+        <div class="container">
+          <h1>${this.branding?.companyName || 'Form Builder'}</h1>
+          <nav>
+            <button onclick="window.Router.navigate('/dashboard')">Cancel</button>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <div class="container">
+          <h2>Create New Form</h2>
+          <p class="text-muted">Choose a starting point for your form</p>
+
+          <!-- Blank Form Option -->
+          <div class="card" style="margin-bottom: 2rem; cursor: pointer; transition: all 0.3s ease; border: 2px solid var(--primary-color);"
+               onclick="window.Router.navigate('/builder', { blank: 'true' })"
+               onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+              <div style="font-size: 4rem; margin-bottom: 1rem;">📝</div>
+              <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-color);">Start from Blank</h3>
+              <p style="margin: 0; color: var(--text-secondary);">Create a custom form from scratch</p>
+            </div>
+          </div>
+
+          ${sampleTemplates.length > 0 ? `
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+              <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                <div>
+                  <h3 class="card-title" style="color: white; display: flex; align-items: center; gap: 0.5rem;">
+                    ✨ Start from Template
+                  </h3>
+                  <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">
+                    Get started quickly with pre-built professional templates
+                  </p>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="grid grid-3">
+                  ${sampleTemplates.map(template => `
+                    <div class="card" style="background: white; cursor: pointer; transition: all 0.3s ease; border: none;"
+                         onclick="app.startFromTemplate('${template.name.replace(/'/g, "\\'")}')"
+                         onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                      <div class="card-body" style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 0.75rem;">${template.icon}</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1rem;">${template.name}</h4>
+                        <p style="margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.4;">
+                          ${template.description}
+                        </p>
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); app.showSampleTemplatePreview('${template.name.replace(/'/g, "\\'")}')">
+                          Preview
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </main>
+    `;
+  }
+
+  /**
+   * Start form from a sample template (directly to builder)
+   */
+  async startFromTemplate(templateName) {
+    try {
+      const sampleTemplate = window.SAMPLE_TEMPLATES.find(t => t.name === templateName);
+      if (!sampleTemplate) {
+        this.showNotification('Template not found', 'error');
+        return;
+      }
+
+      this.showNotification('Loading template...', 'info');
+
+      // Get user's branding to auto-fill company info
+      const branding = await window.DB.getBranding();
+
+      // Create a copy of the sample template sections
+      let sections = JSON.parse(JSON.stringify(sampleTemplate.sections));
+
+      // Add auto-branded company info to the first section if branding exists
+      if (branding && sections.length > 0) {
+        // Build company info header
+        let companyHeader = `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        // Add logo mention if it exists
+        if (branding.logo) {
+          companyHeader += `[Company Logo]\n\n`;
+        }
+
+        companyHeader += `Provided by: ${branding.companyName || 'Our Company'}`;
+        if (branding.phone) companyHeader += `\nPhone: ${branding.phone}`;
+        if (branding.email) companyHeader += `\nEmail: ${branding.email}`;
+        if (branding.website) companyHeader += `\nWebsite: ${branding.website}`;
+        if (branding.address) companyHeader += `\nAddress: ${branding.address}`;
+        if (branding.ein) companyHeader += `\nEIN: ${branding.ein}`;
+        companyHeader += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+        // Prepend to first section's description
+        const firstSection = sections[0];
+        if (firstSection.description) {
+          firstSection.description = companyHeader + '\n' + firstSection.description;
+        } else {
+          firstSection.description = companyHeader;
+        }
+
+        // Store logo reference in section metadata (for PDF generation)
+        if (branding.logo) {
+          firstSection.brandLogo = branding.logo;
+        }
+      }
+
+      // Load directly into FormBuilder (don't save to DB yet)
+      window.FormBuilder.currentTemplate = {
+        name: sampleTemplate.name,
+        sections: sections
+      };
+      window.FormBuilder.editingTemplateId = null;
+
+      // Navigate to builder with the loaded template
+      window.Router.navigate('/builder', { blank: 'true' });
+
+      await window.DB.logEvent('template_started', { templateName });
+    } catch (error) {
+      console.error('[App] Failed to start from template:', error);
+      this.showNotification('Failed to load template: ' + error.message, 'error');
+    }
+  }
+
+  /**
    * Render form builder view
    */
   async renderBuilder(params = {}) {
     const templateId = params.id;
+    const skipChooser = params.blank === 'true';
+
+    // If no template ID and user hasn't explicitly chosen blank, show template chooser
+    if (!templateId && !skipChooser) {
+      this.renderTemplateChooser();
+      return;
+    }
 
     if (templateId) {
       await window.FormBuilder.loadTemplate(parseInt(templateId));
@@ -1152,7 +1301,7 @@ class App {
           <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="flex: 1;">
             Close
           </button>
-          <button class="btn btn-primary" onclick="app.importSampleTemplate('${sampleTemplate.name.replace(/'/g, "\\'")}'); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
+          <button class="btn btn-primary" onclick="app.startFromTemplate('${sampleTemplate.name.replace(/'/g, "\\'")}'); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
             Use This Template
           </button>
         </div>
