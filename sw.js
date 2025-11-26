@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   './js/signaturePad.js',
   './js/router.js',
   './js/cloudBackup.js',
+  './js/sampleTemplates.js',
   './manifest.json',
   // External libraries - we'll cache these from CDN on first load
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',

@@ -111,37 +111,19 @@ Simply open `index.html` in any modern web browser. The app will work in the bro
 
 ## Icons
 
-The app includes an SVG icon at `/icons/icon.svg`. For full PWA functionality, you need PNG icons in the following sizes:
+The app includes all required PWA icons:
+- Vector icon: `/icons/icon.svg`
+- PNG icons: 72x72, 96x96, 128x128, 144x144, 152x152, 192x192, 384x384, 512x512
 
-- 72x72
-- 96x96
-- 128x128
-- 144x144
-- 152x152
-- 192x192
-- 384x384
-- 512x512
+### Regenerating Icons
 
-### Generating PNG Icons
+If you update the SVG icon and need to regenerate PNGs:
 
-You can generate PNG icons from the SVG using:
-
-**Option 1: Online Tool**
-1. Visit https://realfavicongenerator.net/ or similar
-2. Upload `/icons/icon.svg`
-3. Generate and download all sizes
-4. Place in `/icons/` folder
-
-**Option 2: ImageMagick (Command Line)**
 ```bash
-cd icons
-for size in 72 96 128 144 152 192 384 512; do
-  convert -background none -resize ${size}x${size} icon.svg icon-${size}x${size}.png
-done
+node generate-icons.js
 ```
 
-**Option 3: Use the SVG**
-Modern browsers support SVG icons, so the app will work without PNG icons. They're just nice to have for older devices.
+This requires Node.js and will automatically install the `sharp` library for high-quality image conversion.
 
 ## Offline Functionality
 

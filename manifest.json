@@ -2,7 +2,7 @@
   "name": "Client Onboarding Form Builder",
   "short_name": "FormBuilder",
   "description": "Offline-first client onboarding form builder for small businesses",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3f51b5",
