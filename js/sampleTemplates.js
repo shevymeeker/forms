@@ -582,6 +582,229 @@ const SAMPLE_TEMPLATES = [
         ]
       }
     ]
+  },
+
+  {
+    name: 'Client Intake Form - Website Copy Generation',
+    description: 'Comprehensive intake form for collecting client information to generate website copy',
+    category: 'Marketing',
+    icon: '📝',
+    sections: [
+      {
+        id: 'sample-intake-1',
+        title: 'Basic Information',
+        description: 'Tell us about your business',
+        questions: [
+          {
+            id: 'sample-intake-1-1',
+            type: 'text',
+            label: 'Company/Business Name',
+            required: true
+          },
+          {
+            id: 'sample-intake-1-2',
+            type: 'textarea',
+            label: 'What service do you provide? (Be specific - e.g., "Tree removal and storm cleanup" not just "landscaping")',
+            required: true
+          },
+          {
+            id: 'sample-intake-1-3',
+            type: 'text',
+            label: 'Business phone number (This is where quote requests will be sent via text)',
+            required: true
+          },
+          {
+            id: 'sample-intake-1-4',
+            type: 'text',
+            label: 'Where do you provide service? (City, county, or region)',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-2',
+        title: 'Your Customers',
+        description: 'Help us understand who you serve',
+        questions: [
+          {
+            id: 'sample-intake-2-1',
+            type: 'textarea',
+            label: 'Who is your ideal customer? (e.g., "Homeowners with overgrown properties", "Property managers", "Realtors")',
+            required: true
+          },
+          {
+            id: 'sample-intake-2-2',
+            type: 'textarea',
+            label: 'What problem are they trying to solve when they call you?',
+            required: true
+          },
+          {
+            id: 'sample-intake-2-3',
+            type: 'textarea',
+            label: 'Why do other companies fail to solve this problem? (What makes the job difficult?)',
+            required: true
+          },
+          {
+            id: 'sample-intake-2-4',
+            type: 'textarea',
+            label: 'What happens if they DON\'T hire someone to fix this? (What pain continues?)',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-3',
+        title: 'Your Solution',
+        description: 'What makes you different',
+        questions: [
+          {
+            id: 'sample-intake-3-1',
+            type: 'textarea',
+            label: 'What makes YOUR company different from competitors? (Your unique advantage)',
+            required: true
+          },
+          {
+            id: 'sample-intake-3-2',
+            type: 'textarea',
+            label: 'How do you actually solve the problem? (Your process, equipment, approach)',
+            required: true
+          },
+          {
+            id: 'sample-intake-3-3',
+            type: 'text',
+            label: 'How fast can you typically complete jobs? (Timeline/turnaround)',
+            required: true
+          },
+          {
+            id: 'sample-intake-3-4',
+            type: 'text',
+            label: 'How do you price your work? (e.g., "Flat-rate quotes", "By the job, not by the hour")',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-4',
+        title: 'Services',
+        description: 'Your three main services',
+        questions: [
+          {
+            id: 'sample-intake-4-1',
+            type: 'text',
+            label: 'Service 1 Name',
+            required: true
+          },
+          {
+            id: 'sample-intake-4-2',
+            type: 'textarea',
+            label: 'Service 1 - What it includes',
+            required: true
+          },
+          {
+            id: 'sample-intake-4-3',
+            type: 'text',
+            label: 'Service 2 Name',
+            required: true
+          },
+          {
+            id: 'sample-intake-4-4',
+            type: 'textarea',
+            label: 'Service 2 - What it includes',
+            required: true
+          },
+          {
+            id: 'sample-intake-4-5',
+            type: 'text',
+            label: 'Service 3 Name',
+            required: true
+          },
+          {
+            id: 'sample-intake-4-6',
+            type: 'textarea',
+            label: 'Service 3 - What it includes',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-5',
+        title: 'Brand Voice',
+        description: 'Your company\'s personality',
+        questions: [
+          {
+            id: 'sample-intake-5-1',
+            type: 'checkbox',
+            label: 'How would you describe your company\'s personality? (Check all that apply)',
+            required: true,
+            options: [
+              'Professional and polished',
+              'Friendly and approachable',
+              'No-nonsense and direct',
+              'Confident and bold',
+              'Down-to-earth and reliable'
+            ]
+          },
+          {
+            id: 'sample-intake-5-2',
+            type: 'textarea',
+            label: 'If you had to describe your company in ONE sentence, what would it be?',
+            required: true
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-6',
+        title: 'Logo & Branding',
+        description: 'Visual identity information',
+        questions: [
+          {
+            id: 'sample-intake-6-1',
+            type: 'radio',
+            label: 'Do you have a logo file?',
+            required: true,
+            options: ['Yes', 'No']
+          },
+          {
+            id: 'sample-intake-6-2',
+            type: 'text',
+            label: 'If yes, please provide email address to send logo file',
+            required: false
+          },
+          {
+            id: 'sample-intake-6-3',
+            type: 'radio',
+            label: 'Do you have specific brand colors?',
+            required: true,
+            options: ['Yes', 'No']
+          },
+          {
+            id: 'sample-intake-6-4',
+            type: 'text',
+            label: 'If yes, what are your brand colors?',
+            required: false
+          }
+        ]
+      },
+      {
+        id: 'sample-intake-7',
+        title: 'Final Question',
+        description: 'The one thing that matters most',
+        questions: [
+          {
+            id: 'sample-intake-7-1',
+            type: 'textarea',
+            label: 'What\'s the ONE thing you want every potential customer to remember about your business?',
+            required: true
+          },
+          {
+            id: 'sample-intake-7-2',
+            type: 'signature',
+            label: 'Client Signature',
+            required: true
+          }
+        ]
+      }
+    ]
   }
 ];
 
