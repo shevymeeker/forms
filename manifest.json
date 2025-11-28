@@ -3,10 +3,13 @@
   "short_name": "FormBuilder",
   "description": "Offline-first client onboarding form builder for small businesses",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3f51b5",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

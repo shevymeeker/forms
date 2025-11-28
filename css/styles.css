@@ -937,6 +937,33 @@ input[type="radio"] {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
+
+  /* Safe area insets for iPhone notch/Dynamic Island */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Header safe area adjustment */
+  header {
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Container safe area adjustment */
+  .container {
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+
+  /* Bottom buttons safe area adjustment */
+  .btn-group,
+  footer {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* Landscape orientation optimizations */
