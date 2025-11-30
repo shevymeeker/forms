@@ -1,3 +1,4 @@
+const APP_VERSION = '1.0.5';
 const CACHE_NAME = 'form-builder-v5';
 const OFFLINE_CACHE = 'offline-v5';
 
@@ -137,5 +138,8 @@ async function syncData() {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  } else if (event.data && event.data.type === 'GET_VERSION') {
+    // Respond with current app version
+    event.ports[0].postMessage({ version: APP_VERSION });
   }
 });

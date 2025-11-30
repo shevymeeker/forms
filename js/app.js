@@ -8,6 +8,8 @@ class App {
     this.branding = null;
     this.currentSignaturePad = null;
     this.isOnline = navigator.onLine;
+    this.swRegistration = null;
+    this.updateAvailable = false;
   }
 
   /**
@@ -37,8 +39,23 @@ class App {
       // Register service worker
       if ('serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('[App] Service Worker registered:', registration);
+          this.swRegistration = await navigator.serviceWorker.register('/sw.js');
+          console.log('[App] Service Worker registered:', this.swRegistration);
+
+          // Check for updates on registration
+          this.swRegistration.addEventListener('updatefound', () => {
+            const newWorker = this.swRegistration.installing;
+            console.log('[App] New service worker found, installing...');
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New service worker installed, update available
+                console.log('[App] Update available');
+                this.updateAvailable = true;
+                this.showUpdateNotification();
+              }
+            });
+          });
 
           // Listen for service worker messages
           navigator.serviceWorker.addEventListener('message', this.handleSWMessage.bind(this));
@@ -52,6 +69,8 @@ class App {
         this.isOnline = true;
         this.showNotification('Back online', 'success');
         this.requestBackgroundSync();
+        // Check for app updates when coming back online
+        this.checkForUpdates();
       });
 
       window.addEventListener('offline', () => {
@@ -132,6 +151,156 @@ class App {
         console.error('[App] Background sync failed:', error);
       }
     }
+  }
+
+  /**
+   * Check for app updates
+   */
+  async checkForUpdates() {
+    if (!this.swRegistration) {
+      console.log('[App] No service worker registration found');
+      return false;
+    }
+
+    try {
+      console.log('[App] Checking for updates...');
+      await this.swRegistration.update();
+      console.log('[App] Update check complete');
+      return true;
+    } catch (error) {
+      console.error('[App] Update check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Show update notification to user
+   */
+  showUpdateNotification() {
+    const updateBanner = document.createElement('div');
+    updateBanner.id = 'update-banner';
+    updateBanner.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      z-index: 10000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: slideDown 0.3s ease-out;
+    `;
+
+    updateBanner.innerHTML = `
+      <div style="max-width: 800px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <span style="font-weight: 600;">🎉 A new version of the app is available!</span>
+        <button onclick="app.applyUpdate()" class="btn btn-sm" style="background: white; color: #667eea; border: none; font-weight: 600;">
+          Update Now
+        </button>
+        <button onclick="document.getElementById('update-banner').remove()" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: none;">
+          Later
+        </button>
+      </div>
+    `;
+
+    // Remove existing banner if present
+    const existing = document.getElementById('update-banner');
+    if (existing) {
+      existing.remove();
+    }
+
+    document.body.appendChild(updateBanner);
+  }
+
+  /**
+   * Apply available update
+   */
+  async applyUpdate() {
+    if (!this.updateAvailable) {
+      this.showNotification('No updates available', 'info');
+      return;
+    }
+
+    // Tell the service worker to skip waiting
+    if (this.swRegistration && this.swRegistration.waiting) {
+      this.swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+
+    // Reload the page to activate the new service worker
+    this.showNotification('Updating app...', 'info');
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  }
+
+  /**
+   * Get current app version
+   */
+  async getAppVersion() {
+    try {
+      if (!navigator.serviceWorker.controller) {
+        return 'Unknown';
+      }
+
+      return new Promise((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          resolve(event.data.version || 'Unknown');
+        };
+
+        navigator.serviceWorker.controller.postMessage(
+          { type: 'GET_VERSION' },
+          [messageChannel.port2]
+        );
+
+        // Timeout after 2 seconds
+        setTimeout(() => resolve('Unknown'), 2000);
+      });
+    } catch (error) {
+      console.error('[App] Failed to get version:', error);
+      return 'Unknown';
+    }
+  }
+
+  /**
+   * Display app version in settings
+   */
+  async displayAppVersion() {
+    const versionElement = document.getElementById('app-version');
+    if (versionElement) {
+      const version = await this.getAppVersion();
+      versionElement.textContent = `v${version}`;
+    }
+  }
+
+  /**
+   * Manual update check triggered by user
+   */
+  async manualUpdateCheck() {
+    if (!this.isOnline) {
+      this.showNotification('You are offline. Please connect to the internet to check for updates.', 'info');
+      return;
+    }
+
+    this.showNotification('Checking for updates...', 'info');
+
+    const updateFound = await this.checkForUpdates();
+
+    if (!updateFound) {
+      this.showNotification('Failed to check for updates. Please try again later.', 'error');
+      return;
+    }
+
+    // Wait a bit for the update check to complete
+    setTimeout(() => {
+      if (this.updateAvailable) {
+        this.showNotification('Update found! Installing...', 'success');
+      } else {
+        this.showNotification('You are already on the latest version!', 'success');
+      }
+    }, 1500);
   }
 
   /**
@@ -239,6 +408,34 @@ class App {
               ${this.branding ? `
                 <div class="card mt-3">
                   <div class="card-header">
+                    <h3 class="card-title">🔄 App Updates</h3>
+                    <p class="card-subtitle">Keep your app up to date</p>
+                  </div>
+                  <div class="card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                      <div>
+                        <strong>Current Version:</strong>
+                        <span id="app-version" style="margin-left: 0.5rem; color: var(--text-secondary);">Loading...</span>
+                      </div>
+                    </div>
+
+                    <div class="alert alert-info mb-3">
+                      <strong>📱 Auto-Update:</strong> The app automatically checks for updates when you come online.
+                      You'll see a banner at the top when an update is available.
+                    </div>
+
+                    <button class="btn btn-primary" onclick="app.manualUpdateCheck()">
+                      Check for Updates Now
+                    </button>
+
+                    <div class="form-help mt-2">
+                      Click to manually check for app updates and new features.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card mt-3">
+                  <div class="card-header">
                     <h3 class="card-title">💾 Backup Options (Optional)</h3>
                     <p class="card-subtitle">Your data, your choice, your cloud</p>
                   </div>
@@ -342,6 +539,11 @@ class App {
         Your Data, Your Device
       </div>
     `;
+
+    // Load and display app version
+    if (this.branding) {
+      this.displayAppVersion();
+    }
 
     // Handle form submission
     document.getElementById('setupForm').addEventListener('submit', async (e) => {
