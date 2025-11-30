@@ -641,7 +641,7 @@ class App {
                 <div class="grid grid-3">
                   ${sampleTemplates.map(template => `
                     <div class="card" style="background: white; cursor: pointer; transition: all 0.3s ease; border: none;"
-                         onclick="app.startFromTemplate('${template.name.replace(/'/g, "\\'")}')"
+                         onclick="app.importSampleTemplate('${template.name.replace(/'/g, "\\'")}')"
                          onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
                       <div class="card-body" style="text-align: center;">
@@ -1166,6 +1166,21 @@ class App {
         return;
       }
 
+      // Prompt user to name their template
+      const customName = prompt(`Name your template:`, sampleTemplate.name);
+
+      // User cancelled
+      if (customName === null) {
+        return;
+      }
+
+      // Validate name
+      const trimmedName = customName.trim();
+      if (!trimmedName) {
+        this.showNotification('Template name cannot be empty', 'error');
+        return;
+      }
+
       // Get user's branding to auto-fill company info
       const branding = await window.DB.getBranding();
 
@@ -1204,27 +1219,21 @@ class App {
         }
       }
 
-      // Create the new template
+      // Create the new template with custom name
       const newTemplate = {
-        name: sampleTemplate.name,
+        name: trimmedName,
         sections: sections
       };
 
       // Save to database
       const id = await window.DB.saveTemplate(newTemplate);
 
-      this.showNotification(`"${templateName}" imported and auto-branded!`, 'success');
+      this.showNotification(`"${trimmedName}" saved to your templates!`, 'success');
 
-      // Ask if user wants to edit or use it
-      const action = confirm('Template imported with your company branding!\n\nClick OK to edit the template, or Cancel to view all templates.');
+      // Navigate back to templates page
+      window.Router.navigate('/templates');
 
-      if (action) {
-        window.Router.navigate('/builder', { id });
-      } else {
-        window.Router.navigate('/templates');
-      }
-
-      await window.DB.logEvent('sample_template_imported', { templateName, autoBranded: !!branding });
+      await window.DB.logEvent('sample_template_imported', { templateName, customName: trimmedName, autoBranded: !!branding });
     } catch (error) {
       console.error('[App] Failed to import sample template:', error);
       this.showNotification('Failed to import template: ' + error.message, 'error');
@@ -1301,7 +1310,7 @@ class App {
           <button class="btn btn-secondary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="flex: 1;">
             Close
           </button>
-          <button class="btn btn-primary" onclick="app.startFromTemplate('${sampleTemplate.name.replace(/'/g, "\\'")}'); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
+          <button class="btn btn-primary" onclick="app.importSampleTemplate('${sampleTemplate.name.replace(/'/g, "\\'")}'); this.closest('[style*=\\'position: fixed\\']').remove();" style="flex: 1;">
             Use This Template
           </button>
         </div>
